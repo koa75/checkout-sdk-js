@@ -80,6 +80,7 @@ export default class PaypalCommerceButtonStrategy implements CheckoutButtonStrat
             commit: false,
             currency: cart.currency.code,
             disableFunding,
+            buyerCountry: 'PL',
             intent,
         };
     }

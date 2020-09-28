@@ -9,9 +9,16 @@ import PaymentMethodActionCreator from '../../payment-method-action-creator';
 import { PaymentInitializeOptions, PaymentRequestOptions } from '../../payment-request-options';
 import PaymentStrategy from '../payment-strategy';
 
-import { ApproveDataOptions, ButtonsOptions, PaypalCommerceCreditCardPaymentInitializeOptions, PaypalCommerceInitializationData, PaypalCommercePaymentInitializeOptions, PaypalCommercePaymentProcessor, PaypalCommerceScriptOptions } from './index';
+import { ApproveDataOptions,
+    ButtonsOptions,
+    PaypalCommerceCreditCardPaymentInitializeOptions,
+    PaypalCommerceInitializationData,
+    PaypalCommercePaymentInitializeOptions,
+    PaypalCommercePaymentProcessor,
+    PaypalCommerceScriptOptions,
+    PaypalCommerceSDKFunding } from './index';
 
-export default class PaypalCommercePaymentStrategy implements PaymentStrategy {
+export default class PaypalCommerceAlternativeMethodsStrategy implements PaymentStrategy {
     private _orderId?: string;
 
     constructor(
@@ -19,11 +26,17 @@ export default class PaypalCommercePaymentStrategy implements PaymentStrategy {
         private _orderActionCreator: OrderActionCreator,
         private _paymentActionCreator: PaymentActionCreator,
         private _paymentMethodActionCreator: PaymentMethodActionCreator,
-        private _paypalCommercePaymentProcessor: PaypalCommercePaymentProcessor,
-        private _credit: boolean = false
+        private _paypalCommercePaymentProcessor: PaypalCommercePaymentProcessor
     ) {}
 
-    async initialize({ methodId, paypalcommerce }: PaymentInitializeOptions): Promise<InternalCheckoutSelectors> {
+    async initialize({methodId, gatewayId, paypalcommerce}: PaymentInitializeOptions): Promise<InternalCheckoutSelectors> {
+
+        const multiOptionId = methodId;
+        let fundingKey: keyof PaypalCommerceSDKFunding;
+        if (gatewayId) {
+            methodId = gatewayId;
+        }
+
         const { paymentMethods: { getPaymentMethodOrThrow }, cart: { getCartOrThrow } } = await this._store.dispatch(this._paymentMethodActionCreator.loadPaymentMethod(methodId));
         const { initializationData } = getPaymentMethodOrThrow(methodId);
 
@@ -48,10 +61,24 @@ export default class PaypalCommercePaymentStrategy implements PaymentStrategy {
         const buttonParams: ButtonsOptions = { style, onApprove: data => this._tokenizePayment(data, submitForm) };
 
         await this._paypalCommercePaymentProcessor.initialize(paramsScript);
+        switch (multiOptionId) {
+            case 'Bancontact':
+                fundingKey = 'BANCONTACT';
+                break;
+            case 'giropay':
+                fundingKey = 'GIROPAY';
+                break;
+            case 'Przlewy24':
+                fundingKey = 'PRZLEWY24';
+                break;
+            default:
+                fundingKey = 'BANCONTACT';
+        }
 
         this._paypalCommercePaymentProcessor.renderButtons(cartId, container, buttonParams, {
             onRenderButton,
-            fundingKey: this._credit ? 'CREDIT' : 'PAYPAL',
+            // eslint-disable-next-line @typescript-eslint/tslint/config
+            fundingKey: fundingKey,
             paramsForProvider: {isCheckout: true},
         });
 
@@ -112,6 +139,7 @@ export default class PaypalCommercePaymentStrategy implements PaymentStrategy {
             merchantId,
             commit: true,
             currency: currencyCode,
+            buyerCountry: 'PL',
             intent,
         };
     }

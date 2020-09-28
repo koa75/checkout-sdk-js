@@ -18,7 +18,7 @@ export default class PaypalCommerceRequestSender {
     async setupPayment(cartId: string, params: ParamsForProvider = {}): Promise<OrderData> {
         const { isCredit, isCheckout, isCreditCard } = params;
         let provider = 'paypalcommerce';
-
+        console.log('1234567');
         if (isCreditCard) {
             provider = 'paypalcommercecreditcardscheckout';
         } else if (isCheckout) {

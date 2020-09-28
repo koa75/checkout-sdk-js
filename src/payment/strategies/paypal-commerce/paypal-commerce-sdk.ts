@@ -117,6 +117,9 @@ export interface PaypalCommerceButtons {
 export interface PaypalCommerceSDKFunding {
     PAYPAL: string;
     CREDIT: string;
+    BANCONTACT: string;
+    GIROPAY: string;
+    PRZLEWY24: string;
 }
 
 export interface PaypalCommerceSDK {
@@ -149,6 +152,7 @@ export interface PaypalCommerceScriptOptions {
     clientId: string;
     merchantId?: string;
     currency?: string;
+    buyerCountry?: string;
     commit?: boolean;
     intent?: 'capture' | 'authorize';
     disableFunding?: DisableFundingType;
